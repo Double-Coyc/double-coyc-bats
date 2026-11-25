@@ -1,0 +1,16 @@
+# Резервные копии и временные файлы — не публиковать
+*.bak
+*.bak.*
+*.old
+*.orig
+*.tmp
+*~
+Thumbs.db
+desktop.ini
+
+# Локальные и секретные файлы
+.env
+*.key
+*.pem
+*.pfx
+secrets*

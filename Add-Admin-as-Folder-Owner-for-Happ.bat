@@ -3,7 +3,7 @@ setlocal EnableExtensions
 title Fix service folder ACL (trusted principals)
 
 rem ===========================================================================
-rem  Fix-Service-Folder-ACL.bat  v1.0
+rem  Add-Admin-as-Folder-Owner-for-Happ.bat  v1.1  (works for any service folder)
 rem
 rem  Fix: Windows refuses to register a service running as LocalSystem when
 rem  the service binary lives in a folder that is not owned by a trusted
@@ -39,7 +39,7 @@ rem  The script is idempotent: repeated runs produce the same ACL and never
 rem  duplicate ACE entries.
 rem ===========================================================================
 
-set "VER=1.0"
+set "VER=1.1"
 set "MODE=prepare"
 set "TARGET="
 
@@ -129,10 +129,11 @@ if not exist "%TARGET%" (
     goto :fail
 )
 echo [1/1] Removing the strict ACL, restoring inherited permissions...
-icacls "%TARGET%" /inheritance:e /Q >nul 2>&1
-icacls "%TARGET%" /reset /T /C /Q >nul 2>&1
+icacls "%TARGET%" /reset /C /Q >nul 2>&1
 if errorlevel 1 echo       [WARN] icacls reported an error, check the folder manually.
 echo       Done. The folder is back to inherited defaults.
+echo       Subfolders that inherit permissions recover automatically; folders with
+echo       their own explicit ACL (for example a prepared service folder) are kept as is.
 goto :report
 
 rem --- check -----------------------------------------------------------------
@@ -220,7 +221,7 @@ exit /b 0
 rem --- usage -----------------------------------------------------------------
 :usage
 echo.
-echo Fix-Service-Folder-ACL.bat v%VER%
+echo %~nx0 v%VER%
 echo.
 echo Fixes "Owner is outside the trusted system principals" and
 echo "Access control entry grants rights outside the trusted system principals"

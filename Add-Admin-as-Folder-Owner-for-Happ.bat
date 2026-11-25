@@ -3,7 +3,7 @@ setlocal EnableExtensions
 title Fix service folder ACL (trusted principals)
 
 rem ===========================================================================
-rem  Add-Admin-as-Folder-Owner-for-Happ.bat  v1.2  (works for any service folder)
+rem  Add-Admin-as-Folder-Owner-for-Happ.bat  v1.3  (works for any service folder)
 rem
 rem  Fix: Windows refuses to register a service running as LocalSystem when
 rem  the service binary lives in a folder that is not owned by a trusted
@@ -32,14 +32,14 @@ rem  You can also drag and drop a folder onto the .bat file.
 rem
 rem  Options:
 rem    --check    report the current owner/ACL, change nothing
-rem    --restore  recursively reset the target tree to inherited defaults
+rem    --restore  take ownership and recursively reset the tree to inherited defaults
 rem    --help     show this text
 rem
 rem  The script is idempotent: repeated runs produce the same ACL and never
 rem  duplicate ACE entries.
 rem ===========================================================================
 
-set "VER=1.2"
+set "VER=1.3"
 set "MODE=prepare"
 set "TARGET="
 
@@ -128,9 +128,14 @@ if not exist "%TARGET%" (
     echo [ERROR] Folder not found: "%TARGET%"
     goto :fail
 )
-echo [1/1] Removing explicit ACLs and restoring inheritance, recursively...
-echo       Every file and subfolder inside the target is reset, so folders that
-echo       were damaged by a recursive "icacls /inheritance:r /T" recover too.
+echo [1/2] Taking ownership (needed for files copied from another disk/backup)...
+echo       Such files keep the owner SID of the old machine, and icacls cannot
+echo       rewrite their DACL even for an administrator. takeown fixes that.
+takeown /F "%TARGET%" /A /R /D Y >nul 2>&1
+if errorlevel 1 echo       [WARN] takeown skipped some objects, usually harmless.
+echo [2/2] Removing explicit ACLs and restoring inheritance, recursively...
+echo       Every file and subfolder inside the target is reset, so a tree
+echo       damaged by a recursive "icacls /inheritance:r /T" recovers too.
 echo       This can take a while on a large tree. Do not close the window.
 icacls "%TARGET%" /reset /T /C /Q >nul 2>&1
 if errorlevel 1 echo       [WARN] icacls reported an error (some files may be in use).
@@ -243,6 +248,9 @@ echo   owner = BUILTIN\Administrators
 echo   ACL   = SYSTEM:F, Administrators:F, Users:RX
 echo.
 echo Only the target folder is modified. Its parent is never touched.
+echo --restore takes ownership first: files copied from another disk or from a
+echo backup keep the owner SID of the old machine, and their DACL cannot be
+echo rewritten by icacls alone, even as an administrator.
 echo --restore is recursive: it resets files and subfolders too, which is what
 echo repairs a tree broken by "icacls /inheritance:r /T". A prepared service
 echo folder inside that tree must be prepared again afterwards.

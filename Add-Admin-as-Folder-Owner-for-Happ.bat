@@ -3,7 +3,7 @@ setlocal EnableExtensions
 title Fix service folder ACL (trusted principals)
 
 rem ===========================================================================
-rem  Add-Admin-as-Folder-Owner-for-Happ.bat  v1.1  (works for any service folder)
+rem  Add-Admin-as-Folder-Owner-for-Happ.bat  v1.2  (works for any service folder)
 rem
 rem  Fix: Windows refuses to register a service running as LocalSystem when
 rem  the service binary lives in a folder that is not owned by a trusted
@@ -32,14 +32,14 @@ rem  You can also drag and drop a folder onto the .bat file.
 rem
 rem  Options:
 rem    --check    report the current owner/ACL, change nothing
-rem    --restore  drop the strict ACL, restore inherited defaults
+rem    --restore  recursively reset the target tree to inherited defaults
 rem    --help     show this text
 rem
 rem  The script is idempotent: repeated runs produce the same ACL and never
 rem  duplicate ACE entries.
 rem ===========================================================================
 
-set "VER=1.1"
+set "VER=1.2"
 set "MODE=prepare"
 set "TARGET="
 
@@ -128,12 +128,15 @@ if not exist "%TARGET%" (
     echo [ERROR] Folder not found: "%TARGET%"
     goto :fail
 )
-echo [1/1] Removing the strict ACL, restoring inherited permissions...
-icacls "%TARGET%" /reset /C /Q >nul 2>&1
-if errorlevel 1 echo       [WARN] icacls reported an error, check the folder manually.
-echo       Done. The folder is back to inherited defaults.
-echo       Subfolders that inherit permissions recover automatically; folders with
-echo       their own explicit ACL (for example a prepared service folder) are kept as is.
+echo [1/1] Removing explicit ACLs and restoring inheritance, recursively...
+echo       Every file and subfolder inside the target is reset, so folders that
+echo       were damaged by a recursive "icacls /inheritance:r /T" recover too.
+echo       This can take a while on a large tree. Do not close the window.
+icacls "%TARGET%" /reset /T /C /Q >nul 2>&1
+if errorlevel 1 echo       [WARN] icacls reported an error (some files may be in use).
+echo       Done. The target tree is back to inherited defaults.
+echo       A prepared service folder inside the tree is reset as well - run
+echo       prepare on it again before the next install or update.
 goto :report
 
 rem --- check -----------------------------------------------------------------
@@ -230,7 +233,7 @@ echo.
 echo Usage:
 echo   %~nx0 "C:\path\to\service\folder"             prepare (default)
 echo   %~nx0 "C:\path\to\service\folder" --check     report only, no changes
-echo   %~nx0 "C:\path\to\service\folder" --restore   back to inherited defaults
+echo   %~nx0 "C:\path\to\service\folder" --restore   reset the whole tree
 echo   %~nx0 --help                                  this text
 echo.
 echo A folder can also be dragged and dropped onto the .bat file.
@@ -240,6 +243,9 @@ echo   owner = BUILTIN\Administrators
 echo   ACL   = SYSTEM:F, Administrators:F, Users:RX
 echo.
 echo Only the target folder is modified. Its parent is never touched.
+echo --restore is recursive: it resets files and subfolders too, which is what
+echo repairs a tree broken by "icacls /inheritance:r /T". A prepared service
+echo folder inside that tree must be prepared again afterwards.
 echo The script is idempotent: running it again changes nothing.
 echo.
 exit /b 0

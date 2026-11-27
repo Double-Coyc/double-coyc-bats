@@ -21,7 +21,7 @@
 | [`open-cisco.bat`](open-cisco.bat) | Cisco Packet Tracer | Запускает Packet Tracer через прокси `127.0.0.1:9999`: находит exe, запоминает путь, включает прокси и выключает его через 10 секунд. | пользователь |
 | [`add-cisco-firewall.bat`](add-cisco-firewall.bat) | Cisco Packet Tracer | Блокирует исходящие соединения Packet Tracer правилом Брандмауэра, заменяя старое правило с тем же именем. | администратор |
 | [`ico-update.bat`](ico-update.bat) | Проводник | Обновляет иконку ярлыка: спрашивает целевой файл и новый `.ico`, создаёт или перезаписывает `.lnk` с тем же именем в корне диска. | пользователь |
-| [`Add-Admin-as-Folder-Owner-for-Happ.bat`](Add-Admin-as-Folder-Owner-for-Happ.bat) | Службы Windows | Готовит папку под службу `LocalSystem`: владелец `Administrators`, ACL `SYSTEM:F / Administrators:F / Users:RX`; режимы `prepare`, `--check`, `--restore`. [Подробнее →](docs/happ-service-folder-acl.md) | администратор |
+| [`Add-Admin-as-Folder-Owner-for-Happ.bat`](Add-Admin-as-Folder-Owner-for-Happ.bat) | Службы Windows | Готовит папку под службу `LocalSystem`: владелец `Administrators`, ACL `SYSTEM:F / Administrators:F / Users:RX`; режимы `prepare`, `--check`, `--restore`. [Подробнее →](happ-service-folder-acl.md) | администратор |
 
 ### Примечания
 
